@@ -5,7 +5,7 @@
         <div class="col-12 col-md-4 offset-md-4">
           <div class="text-center mb-5">
             <img
-              src="../../../../logo unimus.png"
+              src="https://www.seekpng.com/png/detail/533-5335389_logo-universitas-muhammadiyah-semarang-unimus-muhammadiyah.png"
               class="img-fluid"
               style="max-width: 125px"
             />
