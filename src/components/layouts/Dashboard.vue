@@ -15,7 +15,7 @@
       <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <router-link to="/daftar-bahan-alat" class="nav-link" exact-active-class="active">Alat</router-link>
+            <router-link to="/" class="nav-link" exact-active-class="active">Alat</router-link>
           </li>
           <li class="nav-item">
             <router-link to="/daftar-bahan-padat" class="nav-link" exact-active-class="active">Bahan Padat</router-link>
@@ -24,7 +24,8 @@
             <router-link to="/daftar-bahan-cair" class="nav-link" exact-active-class="active">Bahan Cair</router-link>
           </li>
         </ul>
-        <button class="btn btn-danger" @click="handleSignOut">Log out</button>
+        <button class="btn btn-danger" @click="handleSignOut" v-if="isLogin">Log out</button>
+        <a class="btn btn-danger" href="login" v-else>Log in</a>
       </div>
     </div>
   </nav>
@@ -58,7 +59,7 @@ onMounted(() => {
 
 const handleSignOut = () => {
   signOut(auth).then(() => {
-    router.push({ name: 'Login' })
+    router.push({ name: '/' })
   });
 }
 

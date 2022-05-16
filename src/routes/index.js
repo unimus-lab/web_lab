@@ -18,41 +18,21 @@ const routes = [
         path: '/',
         name: 'Dashboard',
         component: Dashboard,
-        meta: {
-            requiresAuth: true
-        },
         children: [
             {
                 path: '',
-                name: 'Home',
-                component: Home,
-                meta: {
-                    requiresAuth: true
-                }
-            },
-            {
-                path: 'daftar-bahan-alat',
                 name: 'DaftarBahanAlat',
                 component: DaftarBahanAlat,
-                meta: {
-                    requiresAuth: true
-                }
             },
             {
                 path: 'daftar-bahan-padat',
                 name: 'DaftarBahanPadat',
                 component: DaftarBahanPadat,
-                meta: {
-                    requiresAuth: true
-                }
             },
             {
                 path: 'daftar-bahan-cair',
                 name: 'DaftarBahanCair',
                 component: DaftarBahanCair,
-                meta: {
-                    requiresAuth: true
-                }
             },
         ]
     },
@@ -60,26 +40,26 @@ const routes = [
 ];
 
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHistory('/web_lab/'),
     routes
 });
 
-// const getCurrentUser = () => {
-//     return new Promise((resolve, reject) => {
-//         const removeListener = onAuthStateChanged(
-//             getAuth(),
-//             (user) => {
-//                 removeListener();
-//                 resolve(user);
-//             },
-//             reject
-//         );
-//     });
-// };
+const getCurrentUser = () => {
+    return new Promise((resolve, reject) => {
+        const removeListener = onAuthStateChanged(
+            getAuth(),
+            (user) => {
+                removeListener();
+                resolve(user);
+            },
+            reject
+        );
+    })
+}
 
 router.beforeEach( async (to, from, next) => {
     if(to.matched.some((record) => record.meta.requiresAuth)){
-        if(getAuth().currentUser) {
+        if(await getCurrentUser) {
             next();
         } else {
             next({ name: "Login" })

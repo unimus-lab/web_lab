@@ -16,16 +16,19 @@
         btn_class="btn btn-outline-warning float-md-end"
         btn_name="Lapor Bahan Rusak"
         @click="showOffCanvas('offcanvas-lapor-alat-rusak')"
+        v-if="isLogin"
       />
       <Button
         btn_class="btn btn-outline-success float-md-end mx-4"
         btn_name="Pengadaan Bahan"
         @click="showOffCanvas('offcanvas-pengadaan-alat')"
+        v-if="isLogin"
       />
       <Button
         btn_class="btn btn-success float-md-end"
         btn_name="Tambah Bahan Baru"
         @click="showOffCanvas('offcanvas-tambah-bahan')"
+        v-if="isLogin"
       />
     </div>
   </div>
@@ -47,14 +50,16 @@
       :cols="TableTitle"
       :rows="SearchedAlat"
       :button_delete_func="deleteDataAlat"
+      :button_info_func="showInfo"
+      :hide_func="isLogin"
     />
     <div class="d-flex justify-content-center">
       <VPagination
-      v-model="DaftarBahan.currentPage"
-      :pages="DaftarBahan.page"
-      :range-size="DaftarBahan.currentPage"/>
+        v-model="DaftarBahan.currentPage"
+        :pages="DaftarBahan.page"
+        :range-size="DaftarBahan.currentPage"
+      />
     </div>
-    
   </div>
   <div v-else>
     <div class="alert alert-secondary text-center">Tidak ada data...</div>
@@ -75,6 +80,13 @@
         label_name="Jumlah Bahan (liter)"
         placeholder_text="Jumlah Bahan (liter)"
         v-model.number="DataTambahBahan.jumlah"
+        required="required"
+      />
+
+      <InputNumber
+        label_name="Konsentrasi (pH)"
+        placeholder_text="Konsentrasi cairan (pH)"
+        v-model.number="DataTambahBahan.konsentrasi"
         required="required"
       />
 
@@ -107,12 +119,12 @@
     <form @submit.prevent="addPengadaanAlat">
       <label>Nama Bahan :</label>
       <Multiselect
-      v-model="PengadaanBahan.id"
-      :searchable="true"
-      :options="getListAlat"
-      placeholder="Masukkan nama bahan..."
-      :required="true"
-    />
+        v-model="PengadaanBahan.id"
+        :searchable="true"
+        :options="getListAlat"
+        placeholder="Masukkan nama bahan..."
+        :required="true"
+      />
       <br />
       <InputNumber
         label_name="Jumlah Pengadaan Bahan"
@@ -148,12 +160,12 @@
     <form @submit.prevent="addAlatRusak">
       <label>Nama Bahan :</label>
       <Multiselect
-      v-model="LaporBahan.id"
-      :searchable="true"
-      :options="getListAlat"
-      placeholder="Masukkan nama bahan..."
-      :required="true"
-    />
+        v-model="LaporBahan.id"
+        :searchable="true"
+        :options="getListAlat"
+        placeholder="Masukkan nama bahan..."
+        :required="true"
+      />
       <br />
       <InputNumber
         label_name="Jumlah Pengadaan Bahan"
@@ -182,6 +194,52 @@
       </div>
     </form>
   </OffCanvas>
+
+  <!-- Modal info details -->
+  <Modal modal_title="Info Detail" modal_id="modal-info-detail">
+    <Datepicker
+      v-model="date"
+      placeholder="klik untuk memilih tanggal"
+      autoApply
+      range
+      class="mb-4"
+    ></Datepicker>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Tanggal</th>
+          <th>Penginput</th>
+          <th>Keterangan</th>
+          <th>Jumlah</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="(row, index) in handleDate"
+          :key="index"
+          :id="index"
+          :class="
+            row.status.toLowerCase().replace(/\s+/g, '') == 'laporanbahanrusak'
+              ? 'table-warning'
+              : 'table-success'
+          "
+        >
+          <td>{{ row.status }}</td>
+          <td>{{ row.tanggal }}</td>
+          <td>{{ row.penginput }}</td>
+          <td>{{ row.keterangan }}</td>
+          <td>{{ row.jumlah }}</td>
+        </tr>
+        <tr>
+          <td colspan="4" class="text-center">TOTAL JUMLAH STOK (liter)</td>
+          <td>
+            <b>{{ DataRekap.total }}</b>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </Modal>
 </template>
 
 <script setup>
@@ -195,17 +253,19 @@ import SelectDropdown from "../element/SelectDropdown.vue";
 import Select from "../element/Select.vue";
 import Pagination from "../element/Pagination.vue";
 import VPagination from "@hennge/vue3-pagination";
+import Modal from "../element/Modal.vue";
 import "@hennge/vue3-pagination/dist/vue3-pagination.css";
-import Multiselect from '@vueform/multiselect'
-import { getAuth } from "firebase/auth";
+import Multiselect from "@vueform/multiselect";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { onMounted, reactive, ref, computed, watch } from "vue";
 import axios from "axios";
-import * as bootstrap from 'bootstrap';
+import * as bootstrap from "bootstrap";
 
 import init from "../../firebaseDB";
 import {
   getFirestore,
   getDocs,
+  getDoc,
   collection,
   addDoc,
   Timestamp,
@@ -218,7 +278,10 @@ import {
   limit,
 } from "firebase/firestore";
 import Swal from "sweetalert2";
+import Datepicker from "@vuepic/vue-datepicker";
+import "@vuepic/vue-datepicker/dist/main.css";
 
+const date = ref();
 let DaftarBahan = reactive({
   data: [],
   page: 1,
@@ -228,16 +291,17 @@ let DaftarBahan = reactive({
 });
 
 let SearchQuery = ref("");
-let TableTitle = ["No.", "Nama Bahan", "Jumlah Stok (liter)", "Hapus bahan"];
+let TableTitle = ref([]);
 let lastId = null;
 let firstId = null;
 let prevStatus = ref(true);
 let nextStatus = ref(false);
-const activeUser = getAuth().currentUser;
+const isLogin = ref(false);
 
 let DataTambahBahan = reactive({
   nama: "",
   jumlah: 0,
+  konsentrasi: 0,
   keterangan: "",
 });
 
@@ -253,24 +317,67 @@ let LaporBahan = reactive({
   keterangan: "",
 });
 
+let DataRekap = reactive({
+  data: [],
+  total: 0,
+});
+
 let value_select = ref(null);
+const activeUser = getAuth().currentUser;
 
 const db = getFirestore(init);
 const colRef = collection(db, "DaftarBahanCair");
 
 onMounted(() => {
   getDataBahan();
+  onAuthStateChanged(getAuth(), (user) => {
+    if(user) {
+      isLogin.value = true;
+      TableTitle.value = [
+  "No.",
+  "Nama Bahan",
+  "Konsentrasi (pH)",
+  "Jumlah Stok (liter)",
+  "Rekap Barang",
+  "Hapus bahan",
+];
+    } else {
+      isLogin.value = false;
+      TableTitle.value = [
+  "No.",
+  "Nama Bahan",
+  "Konsentrasi (pH)",
+  "Jumlah Stok (liter)",
+  "Rekap Barang"
+]
+    }
+  })
+  let dateInstance = new Date();
+  const startDate =  new Date(dateInstance.getFullYear(), dateInstance.getMonth(), 1);
+  const endDate = new Date(dateInstance.getFullYear(), dateInstance.getMonth() + 1, 0);
+  date.value = [startDate, endDate];
 });
 
 const showOffCanvas = (id) => {
-    var myOffcanvas = document.getElementById(id);
-    var bsOffcanvas = new bootstrap.Offcanvas(myOffcanvas)
-    bsOffcanvas.show();
-}
+  var myOffcanvas = document.getElementById(id);
+  var bsOffcanvas = new bootstrap.Offcanvas(myOffcanvas);
+  bsOffcanvas.show();
+};
 
 const showDataByEntries = () => {
   return SearchedAlat;
 };
+
+const handleDate = computed(() => {
+
+  var resultProductData = DataRekap.data.filter((a) => {
+    var xdate = new Date(a.tanggal);
+    return xdate >= date.value[0] && xdate <= date.value[1];
+  });
+
+  return resultProductData;
+
+});
 
 const SearchedAlat = computed(() => {
   let arraySearch = DaftarBahan.data.filter((alat) => {
@@ -294,14 +401,21 @@ const SearchedAlat = computed(() => {
 
 const getListAlat = computed(() => {
   const sortedList = [];
-  DaftarBahan.data.map(x => {
+  DaftarBahan.data.map((x) => {
     let Obj = Object.create({});
-    Obj.value = x.id_alat
-    Obj.label = x.nama_alat
+    Obj.value = x.id_alat;
+    Obj.label = x.nama_alat;
     sortedList.push(Obj);
   });
   return sortedList;
-})
+});
+
+// const jumlahTotalBahan = computed(() => {
+//   const total = 0;
+//   DataRekap.filter((data_row) => {
+//     return data_row.
+//   });
+// });
 
 //ambil data dari firebase
 const getDataBahan = async () => {
@@ -322,19 +436,22 @@ const getDataBahan = async () => {
           0
         );
       let stokAlat = jumlahPengadaanAlat - jumlahAlatRusak;
-      stokAlat = stokAlat >= 0 ? stokAlat : 0
-      
+      stokAlat = stokAlat >= 0 ? stokAlat : 0;
 
       // DaftarAlat.data.push({id: alat.id, nama_alat: alat.data(0).nama, pengadaan_alat: alat.data().PengadaanAlat, alat_rusak: alat.data().AlatRusak, stok_alat: stokAlat });
       DaftarBahan.data.push({
         id_alat: alat.id,
         nama_alat: alat.data(0).nama_bahan,
+        konsentrasi: alat.data(0).konsentrasi,
         stok_alat: stokAlat,
       });
       if (DaftarBahan.data.length % DaftarBahan.currentEntries >= 1) {
-        DaftarBahan.page = Math.floor(DaftarBahan.data.length / DaftarBahan.currentEntries) + 1;
+        DaftarBahan.page =
+          Math.floor(DaftarBahan.data.length / DaftarBahan.currentEntries) + 1;
       } else {
-        DaftarBahan.page = Math.floor(DaftarBahan.data.length / DaftarBahan.currentEntries);
+        DaftarBahan.page = Math.floor(
+          DaftarBahan.data.length / DaftarBahan.currentEntries
+        );
       }
     });
   });
@@ -354,12 +471,13 @@ const paginate = (arr, size) => {
 const addDataAlat = async () => {
   await addDoc(colRef, {
     nama_bahan: DataTambahBahan.nama,
+    konsentrasi: DataTambahBahan.konsentrasi,
     PengadaanBahan: [
       {
         jumlah_bahan: DataTambahBahan.jumlah,
         tanggal_pengadaan_bahan: Timestamp.now(),
         keterangan: DataTambahBahan.keterangan,
-        di_input_oleh: activeUser.email
+        di_input_oleh: activeUser.email,
       },
     ],
     BahanRusak: [
@@ -367,7 +485,7 @@ const addDataAlat = async () => {
         jumlah_bahan: LaporBahan.jumlah,
         tanggal_laporan_bahan: Timestamp.now(),
         keterangan: LaporBahan.keterangan,
-        di_input_oleh: activeUser.email
+        di_input_oleh: activeUser.email,
       },
     ],
   })
@@ -376,6 +494,7 @@ const addDataAlat = async () => {
       getDataBahan();
       DataTambahBahan.nama = "";
       DataTambahBahan.jumlah = 0;
+      DataTambahBahan.konsentrasi = 0;
       DataTambahBahan.keterangan = "";
     })
     .then(() => {
@@ -385,7 +504,7 @@ const addDataAlat = async () => {
         showConfirmButton: false,
         timer: 1500,
       });
-      var myOffcanvas = document.getElementById('offcanvas-tambah-bahan');
+      var myOffcanvas = document.getElementById("offcanvas-tambah-bahan");
       var bsOffcanvas = bootstrap.Offcanvas.getInstance(myOffcanvas);
       bsOffcanvas.hide();
     });
@@ -430,7 +549,7 @@ const addPengadaanAlat = async () => {
       jumlah_bahan: PengadaanBahan.jumlah,
       tanggal_pengadaan_bahan: Timestamp.now(),
       keterangan: PengadaanBahan.keterangan,
-      di_input_oleh: activeUser.email
+      di_input_oleh: activeUser.email,
     }),
   })
     .then(() => {
@@ -447,7 +566,7 @@ const addPengadaanAlat = async () => {
         showConfirmButton: false,
         timer: 1500,
       });
-      var myOffcanvas = document.getElementById('offcanvas-pengadaan-alat');
+      var myOffcanvas = document.getElementById("offcanvas-pengadaan-alat");
       var bsOffcanvas = bootstrap.Offcanvas.getInstance(myOffcanvas);
       bsOffcanvas.hide();
     });
@@ -459,7 +578,7 @@ const addAlatRusak = async () => {
       jumlah_bahan: LaporBahan.jumlah,
       tanggal_laporan_bahan: Timestamp.now(),
       keterangan: LaporBahan.keterangan,
-      di_input_oleh: activeUser.email
+      di_input_oleh: activeUser.email,
     }),
   })
     .then(() => {
@@ -476,9 +595,68 @@ const addAlatRusak = async () => {
         showConfirmButton: false,
         timer: 1500,
       });
-      var myOffcanvas = document.getElementById('offcanvas-lapor-alat-rusak');
+      var myOffcanvas = document.getElementById("offcanvas-lapor-alat-rusak");
       var bsOffcanvas = bootstrap.Offcanvas.getInstance(myOffcanvas);
       bsOffcanvas.hide();
+    });
+};
+
+const showInfo = async (id) => {
+  DataRekap.data = [];
+
+  var myModal = new bootstrap.Modal(
+    document.getElementById("modal-info-detail"),
+    {
+      keyboard: false,
+    }
+  );
+
+  await getDoc(doc(db, "DaftarBahanCair", id))
+    .then((docSnap) => {
+      let arrayBahanRusak = docSnap.data().BahanRusak;
+      let arrayPengadaanBahan = docSnap.data().PengadaanBahan;
+      let arrayMerge = arrayBahanRusak.concat(arrayPengadaanBahan);
+      let total = 0;
+
+      arrayMerge.forEach((data) => {
+        if (data.jumlah_bahan > 0) {
+          DataRekap.data.push({
+            status:
+              data.tanggal_pengadaan_bahan != null
+                ? "Pengadaan Bahan"
+                : data.tanggal_laporan_bahan != null
+                ? "Laporan Bahan Rusak"
+                : "",
+            tanggal:
+              data.tanggal_pengadaan_bahan != null
+                ? data.tanggal_pengadaan_bahan.toDate().toLocaleString()
+                : data.tanggal_laporan_bahan != null
+                ? data.tanggal_laporan_bahan.toDate().toLocaleString()
+                : "",
+            penginput: data.di_input_oleh,
+            jumlah: data.jumlah_bahan,
+            keterangan: data.keterangan,
+          });
+
+          if (data.tanggal_pengadaan_bahan != null) {
+            total += data.jumlah_bahan;
+          } else {
+            total -= data.jumlah_bahan;
+          }
+        }
+      });
+
+      DataRekap.total = total;
+
+    })
+    .then(() => {
+      myModal.show(myModal);
+      
+      DataRekap.data.sort(function (a, b) {
+        var c = new Date(a.tanggal);
+        var d = new Date(b.tanggal);
+        return c - d;
+      });
     });
 };
 </script>

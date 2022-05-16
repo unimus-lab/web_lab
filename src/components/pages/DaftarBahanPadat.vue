@@ -16,16 +16,19 @@
         btn_class="btn btn-outline-warning float-md-end"
         btn_name="Lapor Bahan Rusak"
         @click="showOffCanvas('offcanvas-lapor-alat-rusak')"
+        v-if="isLogin"
       />
       <Button
         btn_class="btn btn-outline-success float-md-end mx-4"
         btn_name="Pengadaan Bahan"
         @click="showOffCanvas('offcanvas-pengadaan-alat')"
+        v-if="isLogin"
       />
       <Button
         btn_class="btn btn-success float-md-end"
         btn_name="Tambah Bahan Baru"
         @click="showOffCanvas('offcanvas-tambah-bahan')"
+        v-if="isLogin"
       />
     </div>
   </div>
@@ -47,6 +50,8 @@
       :cols="TableTitle"
       :rows="SearchedAlat"
       :button_delete_func="deleteDataAlat"
+      :button_info_func="showInfo"
+      :hide_func="isLogin"
     />
     <div class="d-flex justify-content-center">
       <VPagination
@@ -182,6 +187,53 @@
       </div>
     </form>
   </OffCanvas>
+
+  <!-- Modal info details -->
+  <Modal modal_title="Info Detail" modal_id="modal-info-detail">
+    <Datepicker
+      v-model="date"
+      placeholder="klik untuk memilih tanggal"
+      autoApply
+      range
+      class="mb-4"
+    ></Datepicker>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Tanggal</th>
+          <th>Penginput</th>
+          <th>Keterangan</th>
+          <th>Jumlah</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="(row, index) in handleDate"
+          :key="index"
+          :id="index"
+          :class="
+            row.status.toLowerCase().replace(/\s+/g, '') == 'laporanbahanrusak'
+              ? 'table-warning'
+              : 'table-success'
+          "
+        >
+          <td>{{ row.status }}</td>
+          <td>{{ row.tanggal }}</td>
+          <td>{{ row.penginput }}</td>
+          <td>{{ row.keterangan }}</td>
+          <td>{{ row.jumlah }}</td>
+        </tr>
+        <tr>
+          <td colspan="4" class="text-center">TOTAL JUMLAH STOK (gram)</td>
+          <td>
+            <b>{{ DataRekap.total }}</b>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </Modal>
+
 </template>
 
 <script setup>
@@ -195,9 +247,10 @@ import SelectDropdown from "../element/SelectDropdown.vue";
 import Select from "../element/Select.vue";
 import Pagination from "../element/Pagination.vue";
 import VPagination from "@hennge/vue3-pagination";
+import Modal from "../element/Modal.vue";
 import "@hennge/vue3-pagination/dist/vue3-pagination.css";
 import Multiselect from '@vueform/multiselect'
-import { getAuth } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { onMounted, reactive, ref, computed, watch } from "vue";
 import axios from "axios";
 import * as bootstrap from 'bootstrap';
@@ -206,6 +259,7 @@ import init from "../../firebaseDB";
 import {
   getFirestore,
   getDocs,
+  getDoc,
   collection,
   addDoc,
   Timestamp,
@@ -218,7 +272,10 @@ import {
   limit,
 } from "firebase/firestore";
 import Swal from "sweetalert2";
+import Datepicker from "@vuepic/vue-datepicker";
+import "@vuepic/vue-datepicker/dist/main.css";
 
+const date = ref();
 let DaftarBahan = reactive({
   data: [],
   page: 1,
@@ -228,12 +285,12 @@ let DaftarBahan = reactive({
 });
 
 let SearchQuery = ref("");
-let TableTitle = ["No.", "Nama Bahan", "Jumlah Stok (gram)", "Hapus bahan"];
+let TableTitle = ref([]);
 let lastId = null;
 let firstId = null;
 let prevStatus = ref(true);
 let nextStatus = ref(false);
-const activeUser = getAuth().currentUser;
+const isLogin = ref(false);
 
 let DataTambahBahan = reactive({
   nama: "",
@@ -253,13 +310,32 @@ let LaporBahan = reactive({
   keterangan: "",
 });
 
+let DataRekap = reactive({
+  data: [],
+  total: 0,
+});
+
 let value_select = ref(null);
+const activeUser = getAuth().currentUser;
 
 const db = getFirestore(init);
 const colRef = collection(db, "DaftarBahanPadat");
 
 onMounted(() => {
   getDataBahan();
+  onAuthStateChanged(getAuth(), (user) => {
+    if(user) {
+      isLogin.value = true;
+      TableTitle.value = ["No.", "Nama Bahan", "", "Jumlah Stok (gram)", "Rekap Barang", "Hapus bahan"];
+    } else {
+      isLogin.value = false;
+      TableTitle.value = ["No.", "Nama Bahan", "", "Jumlah Stok (gram)", "Rekap Barang"];
+    }
+  });
+  let dateInstance = new Date();
+  const startDate =  new Date(dateInstance.getFullYear(), dateInstance.getMonth(), 1);
+  const endDate = new Date(dateInstance.getFullYear(), dateInstance.getMonth() + 1, 0);
+  date.value = [startDate, endDate];
 });
 
 const showOffCanvas = (id) => {
@@ -271,6 +347,17 @@ const showOffCanvas = (id) => {
 const showDataByEntries = () => {
   return SearchedAlat;
 };
+
+const handleDate = computed(() => {
+
+  var resultProductData = DataRekap.data.filter((a) => {
+    var xdate = new Date(a.tanggal);
+    return xdate >= date.value[0] && xdate <= date.value[1];
+  });
+
+  return resultProductData;
+
+});
 
 const SearchedAlat = computed(() => {
   let arraySearch = DaftarBahan.data.filter((alat) => {
@@ -480,6 +567,66 @@ const addAlatRusak = async () => {
       bsOffcanvas.hide();
     });
 };
+
+const showInfo = async (id) => {
+  DataRekap.data = [];
+
+  var myModal = new bootstrap.Modal(
+    document.getElementById("modal-info-detail"),
+    {
+      keyboard: false,
+    }
+  );
+
+  await getDoc(doc(db, "DaftarBahanPadat", id))
+    .then((docSnap) => {
+      let arrayBahanRusak = docSnap.data().BahanRusak;
+      let arrayPengadaanBahan = docSnap.data().PengadaanBahan;
+      let arrayMerge = arrayBahanRusak.concat(arrayPengadaanBahan);
+      let total = 0;
+
+      arrayMerge.forEach((data) => {
+        if (data.jumlah_bahan > 0) {
+          DataRekap.data.push({
+            status:
+              data.tanggal_pengadaan_bahan != null
+                ? "Pengadaan Bahan"
+                : data.tanggal_laporan_bahan != null
+                ? "Laporan Bahan Rusak"
+                : "",
+            tanggal:
+              data.tanggal_pengadaan_bahan != null
+                ? data.tanggal_pengadaan_bahan.toDate().toLocaleString()
+                : data.tanggal_laporan_bahan != null
+                ? data.tanggal_laporan_bahan.toDate().toLocaleString()
+                : "",
+            penginput: data.di_input_oleh,
+            jumlah: data.jumlah_bahan,
+            keterangan: data.keterangan,
+          });
+
+          if (data.tanggal_pengadaan_bahan != null) {
+            total += data.jumlah_bahan;
+          } else {
+            total -= data.jumlah_bahan;
+          }
+        }
+      });
+
+      DataRekap.total = total;
+
+    })
+    .then(() => {
+      myModal.show(myModal);
+      
+      DataRekap.data.sort(function (a, b) {
+        var c = new Date(a.tanggal);
+        var d = new Date(b.tanggal);
+        return c - d;
+      });
+    });
+};
+
 </script>
 
 <style src="@vueform/multiselect/themes/default.css"></style>

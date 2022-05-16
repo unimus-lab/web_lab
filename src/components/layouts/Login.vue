@@ -5,9 +5,9 @@
         <div class="col-12 col-md-4 offset-md-4">
           <div class="text-center mb-5">
             <img
-              src="../../../../logo unimus.png"
+              src="/logo pendidikan kimia.png"
               class="img-fluid"
-              style="max-width: 125px"
+              style="max-width: 250px"
             />
           </div>
           <form @submit.prevent="LoginFunc">
@@ -44,7 +44,7 @@
 
 <script setup>
 import { onMounted, reactive, ref, computed, watch } from "vue";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPersistence  } from "firebase/auth";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -54,15 +54,16 @@ const userData = reactive({
   password: "",
 });
 const LoginFunc = async () => {
-  try {
-    await signInWithEmailAndPassword(auth, userData.email, userData.password).then((userCredential) => {
-      // Signed in
-      const user = auth.currentUser;
-      router.push({ name : "DaftarBahanAlat" })
 
-      // ...
-    });
-  } catch (e) {
+  setPersistence(auth, browserSessionPersistence)
+  .then(() => {
+    
+    signInWithEmailAndPassword(auth, userData.email, userData.password); 
+    
+    return router.push({ name : "DaftarBahanAlat" })
+  })
+  .catch((e) => {
+    // Handle Errors here.
     switch (e.code) {
       case "auth/user-not-found":
         alert("User tidak di temukan di database, hubungi admin untuk mendapatkan akses masuk.");
@@ -75,7 +76,33 @@ const LoginFunc = async () => {
     }
 
     return;
-  }
+    
+  });
+
+
+  // try {
+  //   await signInWithEmailAndPassword(auth, userData.email, userData.password).then((userCredential) => {
+  //     // Signed in
+  //     const user = auth.currentUser;
+  //     window.sessionStorage.setItem("userAuth", JSON.stringify(user.email));
+  //     router.push({ name : "DaftarBahanAlat" })
+
+  //     // ...
+  //   });
+  // } catch (e) {
+  //   switch (e.code) {
+  //     case "auth/user-not-found":
+  //       alert("User tidak di temukan di database, hubungi admin untuk mendapatkan akses masuk.");
+  //       break;
+  //     case "auth/wrong-password":
+  //       alert("Password salah.");
+  //       break;
+  //     default:
+  //       alert("Something went wrong.");
+  //   }
+
+  //   return;
+  // }
 
 
   
