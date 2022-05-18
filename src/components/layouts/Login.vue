@@ -5,7 +5,7 @@
         <div class="col-12 col-md-4 offset-md-4">
           <div class="text-center mb-5">
             <img
-              src="/logo pendidikan kimia.png"
+              src="https://i.imgur.com/D9NYwqp.png"
               class="img-fluid"
               style="max-width: 250px"
             />
