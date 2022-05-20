@@ -8,6 +8,7 @@ import { createPinia } from 'pinia'
 /*Bootstrap*/
 import "bootstrap/dist/css/bootstrap.min.css" 
 import "bootstrap/dist/js/bootstrap.min.js"
+import "bootstrap/dist/js/bootstrap.bundle.min.js"
 
 /*Sweet Alert 2*/
 import 'sweetalert2/dist/sweetalert2.min.css'

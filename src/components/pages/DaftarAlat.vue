@@ -1,9 +1,9 @@
 <template>
   <div class="row">
-    <div class="col-4">
+    <div class="col-sm-12 col-md-4 mb-4 mb-sm-0">
       <div class="d-flex">
         <input
-          class="form-control"
+          class="form-control me-md-2"
           type="search"
           placeholder="Tulis nama alat"
           aria-label="Search"
@@ -11,25 +11,27 @@
         />
       </div>
     </div>
-    <div class="col-8">
-      <Button
-        btn_class="btn btn-outline-warning float-md-end"
-        btn_name="Lapor Alat Rusak"
-        @click="showOffCanvas('offcanvas-lapor-alat-rusak')"
-        v-if="isLogin"
-      />
-      <Button
-        btn_class="btn btn-outline-success float-md-end mx-4"
-        btn_name="Pengadaan Alat"
-        @click="showOffCanvas('offcanvas-pengadaan-alat')"
-        v-if="isLogin"
-      />
-      <Button
-        btn_class="btn btn-success float-md-end"
-        btn_name="Tambah Alat Baru"
-        @click="showOffCanvas('offcanvas-tambah-alat')"
-        v-if="isLogin"
-      />
+    <div class="col-sm-12 col-md-8">
+      <div class="button-table">
+        <Button
+          btn_class="btn btn-outline-warning float-md-end mb-4 mb-sm-0"
+          btn_name="Lapor Alat Rusak"
+          @click="showOffCanvas('offcanvas-lapor-alat-rusak')"
+          v-if="isLogin"
+        />
+        <Button
+          btn_class="btn btn-outline-success float-md-end mx-md-4 mb-4 mb-sm-0"
+          btn_name="Pengadaan Alat"
+          @click="showOffCanvas('offcanvas-pengadaan-alat')"
+          v-if="isLogin"
+        />
+        <Button
+          btn_class="btn btn-success float-md-end"
+          btn_name="Tambah Alat Baru"
+          @click="showOffCanvas('offcanvas-tambah-alat')"
+          v-if="isLogin"
+        />
+      </div>
     </div>
   </div>
   <br />
@@ -338,8 +340,16 @@ onMounted(() => {
     }
   });
   let dateInstance = new Date();
-  const startDate =  new Date(dateInstance.getFullYear(), dateInstance.getMonth(), 1);
-  const endDate = new Date(dateInstance.getFullYear(), dateInstance.getMonth() + 1, 0);
+  const startDate = new Date(
+    dateInstance.getFullYear(),
+    dateInstance.getMonth(),
+    1
+  );
+  const endDate = new Date(
+    dateInstance.getFullYear(),
+    dateInstance.getMonth() + 1,
+    0
+  );
   date.value = [startDate, endDate];
 });
 
@@ -354,14 +364,12 @@ const showDataByEntries = () => {
 };
 
 const handleDate = computed(() => {
-
   var resultProductData = DataRekap.data.filter((a) => {
     var xdate = new Date(a.tanggal);
     return xdate >= date.value[0] && xdate <= date.value[1];
   });
 
   return resultProductData;
-
 });
 
 const SearchedAlat = computed(() => {
@@ -643,5 +651,11 @@ const showInfo = async (id) => {
 }
 .multiselect-option span::first-line {
   text-transform: capitalize;
+}
+
+@media only screen and (max-width: 767px) {
+  .button-table button {
+    width: 100%;
+  }
 }
 </style>

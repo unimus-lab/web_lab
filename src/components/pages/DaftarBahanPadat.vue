@@ -1,9 +1,9 @@
 <template>
   <div class="row">
-    <div class="col-3">
+    <div class="col-sm-12 col-md-3 mb-4 mb-sm-0">
       <div class="d-flex">
         <input
-          class="form-control me-2"
+          class="form-control me-md-2"
           type="search"
           placeholder="Tulis nama bahan padat"
           aria-label="Search"
@@ -11,15 +11,17 @@
         />
       </div>
     </div>
-    <div class="col-9">
-      <Button
-        btn_class="btn btn-outline-warning float-md-end"
+    <div class="col-sm-12 col-md-9">
+
+      <div class="button-table">
+        <Button
+        btn_class="btn btn-outline-warning float-md-end mb-4 mb-sm-0"
         btn_name="Lapor Bahan Rusak"
         @click="showOffCanvas('offcanvas-lapor-alat-rusak')"
         v-if="isLogin"
       />
       <Button
-        btn_class="btn btn-outline-success float-md-end mx-4"
+        btn_class="btn btn-outline-success float-md-end mx-md-4 mb-4 mb-sm-0"
         btn_name="Pengadaan Bahan"
         @click="showOffCanvas('offcanvas-pengadaan-alat')"
         v-if="isLogin"
@@ -30,6 +32,8 @@
         @click="showOffCanvas('offcanvas-tambah-bahan')"
         v-if="isLogin"
       />
+      </div>
+      
     </div>
   </div>
   <br />
@@ -628,5 +632,11 @@ const showInfo = async (id) => {
 };
 
 </script>
-
+<style scoped>
+@media only screen and (max-width: 767px) {
+  .button-table button {
+    width: 100%;
+  }
+}
+</style>
 <style src="@vueform/multiselect/themes/default.css"></style>

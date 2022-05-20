@@ -33,7 +33,9 @@
               />
               <label for="floatingPassword">Password</label>
             </div>
-            <button class="btn btn-success form-control" type="submit">Login</button>
+            <button class="btn btn-success form-control" type="submit">
+              Login
+            </button>
           </form>
         </div>
       </div>
@@ -44,7 +46,12 @@
 
 <script setup>
 import { onMounted, reactive, ref, computed, watch } from "vue";
-import { getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPersistence  } from "firebase/auth";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  setPersistence,
+  browserSessionPersistence,
+} from "firebase/auth";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -54,31 +61,34 @@ const userData = reactive({
   password: "",
 });
 const LoginFunc = async () => {
+  setPersistence(auth, browserSessionPersistence).then(() => {
+    signInWithEmailAndPassword(auth, userData.email, userData.password)
+      .then((userCredential) => {
+        return router.push({ name: "DaftarBahanAlat" });
+      })
+      .catch((e) => {
+        // Handle Errors here.
+        switch (e.code) {
+          case "auth/user-not-found":
+            alert(
+              "User tidak di temukan di database, hubungi admin untuk mendapatkan akses masuk."
+            );
+            break;
+          case "auth/invalid-email":
+            alert(
+              "Email tidak valid."
+            );
+            break;
+          case "auth/wrong-password":
+            alert("Password salah.");
+            break;
+          default:
+            alert("Something went wrong.");
+        }
 
-  setPersistence(auth, browserSessionPersistence)
-  .then(() => {
-    
-    signInWithEmailAndPassword(auth, userData.email, userData.password); 
-    
-    return router.push({ name : "DaftarBahanAlat" })
-  })
-  .catch((e) => {
-    // Handle Errors here.
-    switch (e.code) {
-      case "auth/user-not-found":
-        alert("User tidak di temukan di database, hubungi admin untuk mendapatkan akses masuk.");
-        break;
-      case "auth/wrong-password":
-        alert("Password salah.");
-        break;
-      default:
-        alert("Something went wrong.");
-    }
-
-    return;
-    
+        return;
+      });
   });
-
 
   // try {
   //   await signInWithEmailAndPassword(auth, userData.email, userData.password).then((userCredential) => {
@@ -103,8 +113,5 @@ const LoginFunc = async () => {
 
   //   return;
   // }
-
-
-  
 };
 </script>
