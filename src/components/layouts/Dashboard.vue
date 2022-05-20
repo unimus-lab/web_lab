@@ -25,7 +25,7 @@
           </li>
         </ul>
         <button class="btn btn-danger" @click="handleSignOut" v-if="isLogin">Log out</button>
-        <a class="btn btn-danger" href="login" v-else>Log in</a>
+        <a class="btn btn-danger" href="/login" v-else>Log in</a>
       </div>
     </div>
   </nav>
