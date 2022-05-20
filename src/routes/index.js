@@ -40,7 +40,7 @@ const routes = [
 ];
 
 const router = createRouter({
-    history: createWebHistory('/web_lab/'),
+    history: createWebHistory(),
     routes
 });
 
