@@ -10,11 +10,6 @@ import DaftarBahanCair from '../components/pages/DaftarBahanCair.vue'
 
 const routes = [
     {
-        path: '/login',
-        name: 'Login',
-        component: Login
-    },
-    {
         path: '/',
         name: 'Dashboard',
         component: Dashboard,
@@ -34,9 +29,14 @@ const routes = [
                 name: 'DaftarBahanCair',
                 component: DaftarBahanCair,
             },
+            {
+                path: 'login',
+                name: 'Login',
+                component: Login
+            }
         ]
     },
-    
+
 ];
 
 const router = createRouter({
@@ -57,17 +57,17 @@ const getCurrentUser = () => {
     })
 }
 
-router.beforeEach( async (to, from, next) => {
-    if(to.matched.some((record) => record.meta.requiresAuth)){
-        if(await getCurrentUser) {
+router.beforeEach(async (to, from, next) => {
+    if (to.matched.some((record) => record.meta.requiresAuth)) {
+        if (await getCurrentUser) {
             next();
         } else {
             next({ name: "Login" })
         }
-    }else{
+    } else {
         next();
     }
-    
+
 })
 
 
