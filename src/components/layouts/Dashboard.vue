@@ -5,14 +5,11 @@
         class="navbar-toggler"
         type="button"
         data-bs-toggle="collapse"
-        data-bs-target="#navbarTogglerDemo012"
-        aria-controls="navbarTogglerDemo01"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
+        @click="showNavbar"
       >
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse" id="navbarTogglerDemo012">
+      <div class="collapse navbar-collapse" :class="isShow ? 'show' : ''">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
             <router-link to="/" class="nav-link" exact-active-class="active">Alat</router-link>
@@ -44,6 +41,7 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 const isLogin = ref(false);
+const isShow = ref(false);
 let auth;
 
 onMounted(() => {
@@ -54,13 +52,17 @@ onMounted(() => {
     } else {
       isLogin.value = false;
     }
-  })
+  });
 });
 
 const handleSignOut = () => {
   signOut(auth).then(() => {
-    router.push({ name: '/' })
+    router.push({ name: "DaftarBahanAlat" });
   });
+}
+
+const showNavbar = () => {
+  return isShow.value ? isShow.value = false : isShow.value = true;
 }
 
 </script>

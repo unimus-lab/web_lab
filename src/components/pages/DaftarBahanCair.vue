@@ -86,10 +86,17 @@
         required="required"
       />
 
-      <InputNumber
+      <InputDecimal
         label_name="Konsentrasi (pH)"
         placeholder_text="Konsentrasi cairan (pH)"
         v-model.number="DataTambahBahan.konsentrasi"
+        required="required"
+      />
+
+      <InputText
+        label_name="Satuan Konsentrasi"
+        placeholder_text="Satuan Konsentrasi"
+        v-model="DataTambahBahan.satuan_konsentrasi"
         required="required"
       />
 
@@ -207,7 +214,8 @@
       range
       class="mb-4"
     ></Datepicker>
-    <table class="table">
+    <div class="table-responsive">
+      <table class="table">
       <thead>
         <tr>
           <th>Status</th>
@@ -242,6 +250,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
   </Modal>
 </template>
 
@@ -283,6 +292,7 @@ import {
 import Swal from "sweetalert2";
 import Datepicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
+import InputDecimal from "../element/InputDecimal.vue";
 
 const date = ref();
 let DaftarBahan = reactive({
@@ -305,6 +315,7 @@ let DataTambahBahan = reactive({
   nama: "",
   jumlah: 0,
   konsentrasi: 0,
+  satuan_konsentrasi: "",
   keterangan: "",
 });
 
@@ -326,7 +337,8 @@ let DataRekap = reactive({
 });
 
 let value_select = ref(null);
-const activeUser = getAuth().currentUser;
+const activeUser = localStorage.getItem("userAuth");
+const parseActiveUser = JSON.parse(activeUser);
 
 const db = getFirestore(init);
 const colRef = collection(db, "DaftarBahanCair");
@@ -446,6 +458,7 @@ const getDataBahan = async () => {
         id_alat: alat.id,
         nama_alat: alat.data(0).nama_bahan,
         konsentrasi: alat.data(0).konsentrasi,
+        satuan_konsentrasi: alat.data(0).satuan_konsentrasi,
         stok_alat: stokAlat,
       });
       if (DaftarBahan.data.length % DaftarBahan.currentEntries >= 1) {
@@ -475,12 +488,13 @@ const addDataAlat = async () => {
   await addDoc(colRef, {
     nama_bahan: DataTambahBahan.nama,
     konsentrasi: DataTambahBahan.konsentrasi,
+    satuan_konsentrasi: DataTambahBahan.satuan_konsentrasi,
     PengadaanBahan: [
       {
         jumlah_bahan: DataTambahBahan.jumlah,
         tanggal_pengadaan_bahan: Timestamp.now(),
         keterangan: DataTambahBahan.keterangan,
-        di_input_oleh: activeUser.email,
+        di_input_oleh: parseActiveUser.email,
       },
     ],
     BahanRusak: [
@@ -488,7 +502,7 @@ const addDataAlat = async () => {
         jumlah_bahan: LaporBahan.jumlah,
         tanggal_laporan_bahan: Timestamp.now(),
         keterangan: LaporBahan.keterangan,
-        di_input_oleh: activeUser.email,
+        di_input_oleh: parseActiveUser.email,
       },
     ],
   })
@@ -498,6 +512,7 @@ const addDataAlat = async () => {
       DataTambahBahan.nama = "";
       DataTambahBahan.jumlah = 0;
       DataTambahBahan.konsentrasi = 0;
+      DataTambahBahan.satuan_konsentrasi = "",
       DataTambahBahan.keterangan = "";
     })
     .then(() => {
@@ -552,7 +567,7 @@ const addPengadaanAlat = async () => {
       jumlah_bahan: PengadaanBahan.jumlah,
       tanggal_pengadaan_bahan: Timestamp.now(),
       keterangan: PengadaanBahan.keterangan,
-      di_input_oleh: activeUser.email,
+      di_input_oleh: parseActiveUser.email,
     }),
   })
     .then(() => {
@@ -581,7 +596,7 @@ const addAlatRusak = async () => {
       jumlah_bahan: LaporBahan.jumlah,
       tanggal_laporan_bahan: Timestamp.now(),
       keterangan: LaporBahan.keterangan,
-      di_input_oleh: activeUser.email,
+      di_input_oleh: parseActiveUser.email,
     }),
   })
     .then(() => {

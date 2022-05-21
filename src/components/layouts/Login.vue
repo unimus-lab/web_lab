@@ -49,8 +49,6 @@ import { onMounted, reactive, ref, computed, watch } from "vue";
 import {
   getAuth,
   signInWithEmailAndPassword,
-  setPersistence,
-  browserSessionPersistence,
 } from "firebase/auth";
 import { useRouter } from "vue-router";
 
@@ -61,9 +59,10 @@ const userData = reactive({
   password: "",
 });
 const LoginFunc = async () => {
-  setPersistence(auth, browserSessionPersistence).then(() => {
-    signInWithEmailAndPassword(auth, userData.email, userData.password)
+
+  signInWithEmailAndPassword(auth, userData.email, userData.password)
       .then((userCredential) => {
+        window.localStorage.setItem("userAuth", JSON.stringify(auth.currentUser));
         return router.push({ name: "DaftarBahanAlat" });
       })
       .catch((e) => {
@@ -75,9 +74,7 @@ const LoginFunc = async () => {
             );
             break;
           case "auth/invalid-email":
-            alert(
-              "Email tidak valid."
-            );
+            alert("Email tidak valid.");
             break;
           case "auth/wrong-password":
             alert("Password salah.");
@@ -88,7 +85,6 @@ const LoginFunc = async () => {
 
         return;
       });
-  });
 
   // try {
   //   await signInWithEmailAndPassword(auth, userData.email, userData.password).then((userCredential) => {

@@ -201,7 +201,8 @@
       range
       class="mb-4"
     ></Datepicker>
-    <table class="table">
+    <div class="table-responsive">
+      <table class="table">
       <thead>
         <tr>
           <th>Status</th>
@@ -236,6 +237,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
   </Modal>
 
 </template>
@@ -320,7 +322,8 @@ let DataRekap = reactive({
 });
 
 let value_select = ref(null);
-const activeUser = getAuth().currentUser;
+const activeUser = localStorage.getItem("userAuth");
+const parseActiveUser = JSON.parse(activeUser);
 
 const db = getFirestore(init);
 const colRef = collection(db, "DaftarBahanPadat");
@@ -449,7 +452,7 @@ const addDataAlat = async () => {
         jumlah_bahan: DataTambahBahan.jumlah,
         tanggal_pengadaan_bahan: Timestamp.now(),
         keterangan: DataTambahBahan.keterangan,
-        di_input_oleh: activeUser.email
+        di_input_oleh: parseActiveUser.email
       },
     ],
     BahanRusak: [
@@ -457,7 +460,7 @@ const addDataAlat = async () => {
         jumlah_bahan: LaporBahan.jumlah,
         tanggal_laporan_bahan: Timestamp.now(),
         keterangan: LaporBahan.keterangan,
-        di_input_oleh: activeUser.email
+        di_input_oleh: parseActiveUser.email
       },
     ],
   })
@@ -520,7 +523,7 @@ const addPengadaanAlat = async () => {
       jumlah_bahan: PengadaanBahan.jumlah,
       tanggal_pengadaan_bahan: Timestamp.now(),
       keterangan: PengadaanBahan.keterangan,
-      di_input_oleh: activeUser.email
+      di_input_oleh: parseActiveUser.email
     }),
   })
     .then(() => {
@@ -549,7 +552,7 @@ const addAlatRusak = async () => {
       jumlah_bahan: LaporBahan.jumlah,
       tanggal_laporan_bahan: Timestamp.now(),
       keterangan: LaporBahan.keterangan,
-      di_input_oleh: activeUser.email
+      di_input_oleh: parseActiveUser.email
     }),
   })
     .then(() => {

@@ -10,9 +10,9 @@
         <tr v-for="(row, index) in rows" :key="index" :id="index">
           <td>{{ index + 1 }}</td>
           <td>{{ row.nama_alat }}</td>
-          <td class="konsentrasi">{{ row.konsentrasi }}</td>
-          <td>{{ row.stok_alat }}</td>
-          <td><Button type="button" btn_name="Info Detail" btn_class="btn btn-warning" :id="'info-' + index" @onClick="button_info_func(row.id_alat)" /></td>
+          <td class="konsentrasi">{{ row.konsentrasi }} {{ row.satuan_konsentrasi }}</td>
+          <td class="fw-bold">{{ row.stok_alat }}</td>
+          <td><Button type="button" btn_name="Info Stok" btn_class="btn btn-warning" :id="'info-' + index" @onClick="button_info_func(row.id_alat)" /></td>
           <td v-if="hide_func"><Button type="button" btn_name="Hapus" btn_class="btn btn-danger" :id="'hapus-' + index" @onClick="button_delete_func(row.id_alat)" /></td>
         </tr>
       </tbody>
@@ -50,13 +50,6 @@ const table_props = defineProps({
 <style scoped>
 .table>tbody, .table>thead {
   text-align: center;
-}
-
-.table > tbody > tr > td:nth-child(2) {
-  text-transform: lowercase;
-}
-.table > tbody > tr > td:nth-child(2)::first-line {
-  text-transform: capitalize;
 }
 
 </style>

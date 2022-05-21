@@ -198,7 +198,8 @@
       range
       class="mb-4"
     ></Datepicker>
-    <table class="table">
+    <div class="table-responsive">
+      <table class="table">
       <thead>
         <tr>
           <th>Status</th>
@@ -233,6 +234,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
   </Modal>
 </template>
 
@@ -316,7 +318,8 @@ let DataRekap = reactive({
 });
 
 let value_select = ref(null);
-const activeUser = getAuth().currentUser;
+const activeUser = localStorage.getItem("userAuth");
+const parseActiveUser = JSON.parse(activeUser);
 
 const db = getFirestore(init);
 const colRef = collection(db, "DaftarAlat");
@@ -462,7 +465,7 @@ const addDataAlat = async () => {
         jumlah_alat: DataTambahAlat.jumlah,
         tanggal_pengadaan_alat: Timestamp.now(),
         keterangan: DataTambahAlat.keterangan,
-        di_input_oleh: activeUser.email,
+        di_input_oleh: parseActiveUser.email,
       },
     ],
     AlatRusak: [
@@ -470,7 +473,7 @@ const addDataAlat = async () => {
         jumlah_rusak: LaporAlat.jumlah,
         tanggal_laporan_rusak: Timestamp.now(),
         keterangan: LaporAlat.keterangan,
-        di_input_oleh: activeUser.email,
+        di_input_oleh: parseActiveUser.email,
       },
     ],
   })
@@ -533,7 +536,7 @@ const addPengadaanAlat = async () => {
       jumlah_alat: PengadaanAlat.jumlah,
       tanggal_pengadaan_alat: Timestamp.now(),
       keterangan: PengadaanAlat.keterangan,
-      di_input_oleh: activeUser.email,
+      di_input_oleh: parseActiveUser.email,
     }),
   })
     .then(() => {
@@ -562,7 +565,7 @@ const addAlatRusak = async () => {
       jumlah_rusak: LaporAlat.jumlah,
       tanggal_laporan_rusak: Timestamp.now(),
       keterangan: LaporAlat.keterangan,
-      di_input_oleh: activeUser.email,
+      di_input_oleh: parseActiveUser.email,
     }),
   })
     .then(() => {
@@ -646,12 +649,6 @@ const showInfo = async (id) => {
 
 <style src="@vueform/multiselect/themes/default.css"></style>
 <style>
-.multiselect-option span {
-  text-transform: lowercase;
-}
-.multiselect-option span::first-line {
-  text-transform: capitalize;
-}
 
 @media only screen and (max-width: 767px) {
   .button-table button {
