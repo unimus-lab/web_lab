@@ -10,3 +10,7 @@
 table tr td {
     vertical-align: middle;
 }
+.dp__input_wrap .dp__clear_icon {
+    display: none;
+    user-select: none;
+}

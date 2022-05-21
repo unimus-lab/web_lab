@@ -87,8 +87,8 @@
       />
 
       <InputDecimal
-        label_name="Konsentrasi (pH)"
-        placeholder_text="Konsentrasi cairan (pH)"
+        label_name="Konsentrasi"
+        placeholder_text="Konsentrasi cairan"
         v-model.number="DataTambahBahan.konsentrasi"
         required="required"
       />
@@ -351,7 +351,7 @@ onMounted(() => {
       TableTitle.value = [
   "No.",
   "Nama Bahan",
-  "Konsentrasi (pH)",
+  "Konsentrasi",
   "Jumlah Stok (ml)",
   "Rekap Barang",
   "Hapus bahan",
@@ -361,7 +361,7 @@ onMounted(() => {
       TableTitle.value = [
   "No.",
   "Nama Bahan",
-  "Konsentrasi (pH)",
+  "Konsentrasi",
   "Jumlah Stok (ml)",
   "Rekap Barang"
 ]
